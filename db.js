@@ -8,7 +8,7 @@ var db_config = {
 
 var connection;
 
-function handDisconnect(){
+function handleDisconnect(){
     connection = mysql.createConnection(db_config);
     connection.connect(function(err){
         if(err){
