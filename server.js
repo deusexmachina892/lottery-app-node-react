@@ -27,6 +27,15 @@ app.post('/', async (req, res) => {
     }
 });
 
+app.get('/total_amount',async (req, res)=>{
+    try{
+        var result = await get_total_amount();
+        res.send(result);
+    } catch (err){
+        res.send(err);
+        }
+});
+
 const port = process.env.PORT || 3001
 app.listen(port, ()=>{
     console.log(`Server running on port ${port}`)
