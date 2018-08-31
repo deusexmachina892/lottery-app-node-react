@@ -1,10 +1,13 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const {save_user_information} = require('./models/server_db');
+const path = require('path');
+const publicPath = path.join(__dirname, './public')
 const app = express();
 
 
 //app.use(express.json());
+app.use(express.static(publicPath));
 /*Handling all the parsing*/
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
