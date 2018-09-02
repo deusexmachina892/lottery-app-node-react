@@ -22,7 +22,7 @@ class App extends React.Component{
             amount : this.state.amount 
         });
         console.log(response);
-
+        window.location.href = response.data;
     }
     render(){
         return(<div>

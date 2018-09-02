@@ -16,9 +16,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 //Paypal Config
 paypal.configure({
-    'mode': config.get('mode'), //sandbox or live
-    'client_id': config.get('client_id'),
-    'client_secret': config.get('client_secret')
+    'mode': config.get("paypal").mode, //sandbox or live
+    'client_id': config.get("paypal").client_id,
+    'client_secret': config.get("paypal").client_secret
   });
 
 app.post('/post_info', async (req, res) => {
@@ -62,8 +62,22 @@ app.post('/post_info', async (req, res) => {
                 "description": "Lottery Purchase"
             }]
         };
+
+        paypal.payment.create(create_payment_json, function (error, payment) {
+            if (error) {
+                throw error;
+            } else {
+                console.log("Create Payment Response");
+                console.log(payment);
+                for(var i = 0; i < payment.links.length; i++){
+                    if(payment.links[i].rel == 'approval_url'){
+                        return res.send(payment.links[i].href);
+                    }
+                }
+            }
+        });
         
-        res.send(result);
+       // res.send(result);
     } catch(err){
         res.status(400).send('Could not save user info');
     }
