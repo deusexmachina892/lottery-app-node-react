@@ -4,6 +4,7 @@ const {save_user_information} = require('./models/server_db');
 const path = require('path');
 const publicPath = path.join(__dirname, './public');
 const paypal = require('paypal-rest-sdk');
+const config = require('config');
 const app = express();
 
 
@@ -15,9 +16,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 //Paypal Config
 paypal.configure({
-    'mode': 'sandbox', //sandbox or live
-    'client_id': 'AfqCyeU9ql_n_QF42v7_Vist-98impxlbbECu5hTSx68T3ImuJ-EZTff1w1q5QzKams70aXOfi2q0iMh',
-    'client_secret': 'EIlbscKOOjCUAVqDVsy9J-pOyMXeIctkgCxpVkImEqHHkkGLVZkZ_NKIutibIyzbLUsYQG5Cw1BdemUv'
+    'mode': config.get('mode'), //sandbox or live
+    'client_id': config.get('client_id'),
+    'client_secret': config.get('client_secret')
   });
 
 app.post('/post_info', async (req, res) => {
@@ -32,6 +33,36 @@ app.post('/post_info', async (req, res) => {
     }
     try{
         var result =  await save_user_information({"email": email,"amount": amount});
+        var create_payment_json = {
+            "intent": "sale",
+            "payer": {
+                "payment_method": "paypal"
+            },
+            "redirect_urls": {
+                "return_url": "http://localhost:3001/success",
+                "cancel_url": "http://localhost:3001/cancel"
+            },
+            "transactions": [{
+                "item_list": {
+                    "items": [{
+                        "name": "Lottery",
+                        "sku": "funding",
+                        "price": amount,
+                        "currency": "USD",
+                        "quantity": 1
+                    }]
+                },
+                "amount": {
+                    "currency": "USD",
+                    "total": amount
+                },
+                "payee":{
+                    "email": "lottery-manager@test.com"
+                },
+                "description": "Lottery Purchase"
+            }]
+        };
+        
         res.send(result);
     } catch(err){
         res.status(400).send('Could not save user info');
