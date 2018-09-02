@@ -7,6 +7,12 @@ class App extends React.Component{
             'email' : ''
          }   
     }
+    //checks whether we have the information we need to move forward
+    async componentDidMount(){
+        const result = await axios.get('/total_amount');
+        //console.log(result.data[0].total_amount);
+        this.setState({total_amount: result.data[0].total_amount})
+    }
 
     onSubmit = async (event)=>{
         //prevent page from reloading
