@@ -5,11 +5,21 @@ const path = require('path');
 const publicPath = path.join(__dirname, './public');
 const paypal = require('paypal-rest-sdk');
 const config = require('config');
+const session = require('express-session');
 const app = express();
 
 
 //app.use(express.json());
 app.use(express.static(publicPath));
+
+//Session
+app.use(session({
+    resave: true,
+    saveUninitialized: true,
+    secret: 'Lottery app',
+    cookie: {maxAge: 60000}
+}));
+
 /*Handling all the parsing*/
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
@@ -32,8 +42,11 @@ app.post('/post_info', async (req, res) => {
         return res.send(return_info);
     }
     var net_amount_after_fee = amount * 0.9;
+    req.session.paypal_amount = amount
+    req.session.amount = net_amount_after_fee;
+    req.session.email = email;
     try{
-        var result =  await save_user_information({"email": email,"amount": net_amount_after_fee});
+      // var result =  await save_user_information({"email": email,"amount": net_amount_after_fee});
         var create_payment_json = {
             "intent": "sale",
             "payer": {
@@ -93,20 +106,85 @@ app.get('/success', (req, res) =>{
         "transactions":[{
             "amount": {
                 "currency": "USD",
-                "total" : 100
+                "total" : req.session.paypal_amount
             }
         }]
     };
-    paypal.payment.execute(paymentId, execute_payment_json, function(err, payment){
+    paypal.payment.execute(paymentId, execute_payment_json, async function(err, payment){
         if(err){
             console.log(err.response);
-            throw err;
+            //throw err;
+            res.redirect('/payment_failed');
         } else {
             console.log(payment);
+           var result = await save_user_information({email: req.session.email, amount: req.session.amount});
             res.redirect('http://localhost:3001');  
         }
     });
     
+});
+
+app.get('/pick_winner', async (req,res)=>{
+    var result = await get_total_amount();
+    var total_amount = result[0].total_amount;
+    req.session.total_amount = total_amount;
+    console.log(total_amount);
+
+
+    /* Selecting the winner*/
+    //Get a list of users from the database
+    //Choose the winner
+
+    /*Payout to the Winner */
+    var create_payment_json = {
+        "intent": "sale",
+        "payer": {
+            "payment_method": "paypal"
+        },
+        "redirect_urls": {
+            "return_url": "http://localhost:3001/success",
+            "cancel_url": "http://localhost:3001/cancel"
+        },
+        "transactions": [{
+            "item_list": {
+                "items": [{
+                    "name": "Lottery",
+                    "sku": "funding",
+                    "price": req.session.total_amount,
+                    "currency": "USD",
+                    "quantity": 1
+                }]
+            },
+            "amount": {
+                "currency": "USD",
+                "total": req.session.total_amount
+            },
+            "payee":{
+                "email": winner_email
+            },
+            "description": "Lottery Win Prices"
+        }]
+    };
+
+    paypal.payment.create(create_payment_json, function (error, payment) {
+        if (error) {
+            throw error;
+        } else {
+            console.log("Create Payment Response");
+            console.log(payment);
+            for(var i = 0; i < payment.links.length; i++){
+                if(payment.links[i].rel == 'approval_url'){
+                    return res.send(payment.links[i].href);
+                }
+            }
+        }
+    });
+    
+
+});
+
+app.get('/payment_failed', (req,res)=>{
+    res.status(400).send('Payment Failed');
 });
 
 app.get('/total_amount',async (req, res)=>{
