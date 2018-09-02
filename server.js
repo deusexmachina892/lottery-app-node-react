@@ -31,8 +31,9 @@ app.post('/post_info', async (req, res) => {
         return_info.message = "Amount should be greater than 1";
         return res.send(return_info);
     }
+    var net_amount_after_fee = amount * 0.9;
     try{
-        var result =  await save_user_information({"email": email,"amount": amount});
+        var result =  await save_user_information({"email": email,"amount": net_amount_after_fee});
         var create_payment_json = {
             "intent": "sale",
             "payer": {
@@ -81,6 +82,31 @@ app.post('/post_info', async (req, res) => {
     } catch(err){
         res.status(400).send('Could not save user info');
     }
+});
+
+
+app.get('/success', (req, res) =>{
+    const payerId = req.query.PayerID;
+    const paymentId = req.query.paymentId;
+    var execute_payment_json ={
+        "payer_id": payerId,
+        "transactions":[{
+            "amount": {
+                "currency": "USD",
+                "total" : 100
+            }
+        }]
+    };
+    paypal.payment.execute(paymentId, execute_payment_json, function(err, payment){
+        if(err){
+            console.log(err.response);
+            throw err;
+        } else {
+            console.log(payment);
+            res.redirect('http://localhost:3001');  
+        }
+    });
+    
 });
 
 app.get('/total_amount',async (req, res)=>{
