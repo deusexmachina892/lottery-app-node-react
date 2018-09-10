@@ -28,13 +28,16 @@ get_list_of_users = () => new Promise((resolve, reject) => {
 });
 
 delete_all_users = () => new Promise(()=>{
-    db.query('DELETE * FROM lottery_information', null, function(err, results, fields){
+    db.query('DELETE FROM lottery_information WHERE ID>0', null, function(err, results, fields){
         if(err){
             reject('Could not delete all entries');
         }
-        resolve(results);
+        resolve("Successfully deleted all users");
     })
 })
 module.exports = {
-    save_user_information
+    save_user_information,
+    get_total_amount,
+    get_list_of_users,
+    delete_all_users
 }
