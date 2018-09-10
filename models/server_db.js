@@ -27,7 +27,7 @@ get_list_of_users = () => new Promise((resolve, reject) => {
     })
 });
 
-delete_all_users = () => new Promise(()=>{
+delete_all_users = () => new Promise((resolve, reject)=>{
     db.query('DELETE FROM lottery_information WHERE ID>0', null, function(err, results, fields){
         if(err){
             reject('Could not delete all entries');

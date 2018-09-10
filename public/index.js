@@ -11,6 +11,7 @@ class App extends React.Component{
     async componentDidMount(){
         const result = await axios.get('/total_amount');
         //console.log(result.data[0].total_amount);
+        if(result.data[0].total_amount === null) return this.setState({total_amount: 0})
         this.setState({total_amount: result.data[0].total_amount})
     }
 

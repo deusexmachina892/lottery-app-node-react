@@ -113,8 +113,8 @@ app.get('/success', (req, res) =>{
     paypal.payment.execute(paymentId, execute_payment_json, async function(err, payment){
         if(err){
             console.log(err.response);
-            //throw err;
-            res.redirect('/payment_failed');
+            throw err;
+            //res.redirect('/payment_failed');
         } else {
             console.log(payment);
            if(req.session.winner_picked){
@@ -134,7 +134,7 @@ app.get('/success', (req, res) =>{
 app.get('/pick_winner', async (req,res)=>{
     var result = await get_total_amount();
     var total_amount = result[0].total_amount;
-    req.session.total_amount = total_amount;
+    req.session.paypal_amount = total_amount;
     console.log(total_amount);
 
 
@@ -166,14 +166,14 @@ app.get('/pick_winner', async (req,res)=>{
                 "items": [{
                     "name": "Lottery",
                     "sku": "funding",
-                    "price": req.session.total_amount,
+                    "price": total_amount,
                     "currency": "USD",
                     "quantity": 1
                 }]
             },
             "amount": {
                 "currency": "USD",
-                "total": req.session.total_amount
+                "total": total_amount
             },
             "payee":{
                 "email": winner_email
@@ -190,7 +190,7 @@ app.get('/pick_winner', async (req,res)=>{
             console.log(payment);
             for(var i = 0; i < payment.links.length; i++){
                 if(payment.links[i].rel == 'approval_url'){
-                    return res.send(payment.links[i].href);
+                    return res.redirect(payment.links[i].href);
                 }
             }
         }
