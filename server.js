@@ -117,10 +117,17 @@ app.get('/success', (req, res) =>{
             res.redirect('/payment_failed');
         } else {
             console.log(payment);
-           var result = await save_user_information({email: req.session.email, amount: req.session.amount});
+           if(req.session.winner_picked){
+            await delete_all_users();
+            req.session.winner_picked = false;
+            } else {
+            await save_user_information({email: req.session.email, amount: req.session.amount});
+        }
             res.redirect('http://localhost:3001');  
+
         }
     });
+    
     
 });
 
@@ -134,7 +141,16 @@ app.get('/pick_winner', async (req,res)=>{
     /* Selecting the winner*/
     //Get a list of users from the database
     //Choose the winner
-
+    var list_of_participants = await get_list_of_users();
+    list_of_participants = JSON.parse(JSON.stringify( list_of_participants));
+    email_array = [];
+    list_of_participants.forEach(function(element){
+        email_array.push(element.email);
+    });
+    var winner_email = email_array[Math.floor(Math.random()*email_array.length)];
+    req.session.winner_picked =true;
+    console.log(winner_email);
+    //return true;
     /*Payout to the Winner */
     var create_payment_json = {
         "intent": "sale",

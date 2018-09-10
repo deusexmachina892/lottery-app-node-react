@@ -10,13 +10,31 @@ save_user_information = (data) =>  new Promise((resolve, reject)=>{
 });
 
 get_total_amount = () =>  new Promise((resolve, reject)=>{
-    db.query('SELECT SUM(amount) AS total_amount FROM lottery_information', function(err, results, fields){
+    db.query('SELECT SUM(amount) AS total_amount FROM lottery_information', null, function(err, results, fields){
         if(err){
             reject('could not find total amount');
         }
         resolve(results);
     });
 });
+
+get_list_of_users = () => new Promise((resolve, reject) => {
+    db.query('SELECT email FROM lottery_information', null, function(err, results, fields){
+        if(err){
+            reject('could not find the list of users');
+        }
+        resolve(results);   
+    })
+});
+
+delete_all_users = () => new Promise(()=>{
+    db.query('DELETE * FROM lottery_information', null, function(err, results, fields){
+        if(err){
+            reject('Could not delete all entries');
+        }
+        resolve(results);
+    })
+})
 module.exports = {
     save_user_information
 }
